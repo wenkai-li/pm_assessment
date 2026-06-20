@@ -20,8 +20,11 @@ failure on the line between a capability ceiling and a premature commitment.
 This repository implements the model-internals domain as the worked instance: a transformer trained
 on `(a + b) mod p`, whose ground-truth algorithm (the Fourier "clock") is known, so verification is
 exact. The key frequencies are randomized per training seed, so the answer has to be rediscovered for
-every model rather than memorized. The other four domains are specified as stubs that share the
-interface (`domains/`).
+every model rather than memorized. Its prediction contract is a dependency-ordered derivation ladder
+(necessity, sufficiency, specificity, algorithm, phase shift), so the same depth-calibrated judge that
+scores the synthetic task scores this real one: naming the components without deriving how they compute
+the answer is a shallow commit and scores below the success band. The other four domains are specified
+as stubs that share the interface (`domains/`).
 
 ## Why it is interesting
 
