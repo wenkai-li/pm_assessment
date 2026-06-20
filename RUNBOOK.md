@@ -28,6 +28,13 @@ The experiment has two goals:
 
 ## 1. What is in the repository
 
+The benchmark is a uniform verifier over five research domains (model internals, training dynamics,
+data forensics, inference systems, learned-policy behavior). The shared pieces are
+`discovery-env/domains/base.py` (the `Domain` interface), `discovery-env/contract.py` (the
+domain-agnostic prediction-contract grader), and `discovery-env/benchmark.py` (run the grader over
+any registered domain; `python3 benchmark.py --list`). The model-internals domain is implemented; the
+other four are specified stubs under `discovery-env/domains/`. The internals-domain files:
+
 - `discovery-env/model.py` — the transformer (forward accepts injected embeddings).
 - `discovery-env/train_modular_addition.py` — trains to grokking for one or more seeds; early-stops
   when test accuracy passes 0.995 and saves `checkpoints/seed_*.pt`.

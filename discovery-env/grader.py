@@ -35,6 +35,33 @@ def specificity_curve(model, tokens, targets, probe, p):
     return [ablate(model, tokens, targets, [k], p, mode="remove") for k in probe]
 
 
+def check_prediction(model, p, K, pred, tokens, targets):
+    """Execute one contract claim and return (actual_value, passed). Shared by the MI grader and by
+    the generic benchmark grader in contract.py via the modular-addition domain backend."""
+    chance = 1.0 / p
+    pid = pred["id"]
+    if pid == "necessity":
+        actual = ablate(model, tokens, targets, K, p, mode="remove")
+        passed = (actual <= chance + 0.03) and abs(actual - pred["predicted"]) <= pred["tol"]
+    elif pid == "sufficiency":
+        actual = ablate(model, tokens, targets, K, p, mode="keep")
+        passed = (actual >= 0.9) and abs(actual - pred["predicted"]) <= pred["tol"]
+    elif pid == "specificity":
+        actual = specificity_curve(model, tokens, targets, pred["probe"], p)
+        err = sum(abs(x - y) for x, y in zip(actual, pred["predicted"])) / len(actual)
+        passed = err <= pred["tol"]
+    elif pid == "algorithm":
+        actual = algorithm_corr(model, tokens, p, K)
+        passed = (actual >= 0.9) and abs(actual - pred["predicted"]) <= pred["tol"]
+    elif pid == "phase_shift":
+        logits, predicted = phase_shift(model, tokens, p, pred["freq"], pred.get("shift", 1))
+        actual = (logits.argmax(-1) == predicted).float().mean().item()
+        passed = (actual >= 0.8) and abs(actual - pred["predicted"]) <= pred["tol"]
+    else:
+        actual, passed = None, False
+    return actual, passed
+
+
 def _valid_freqs(freqs, p):
     return all(isinstance(k, int) and 1 <= k <= p // 2 for k in freqs)
 
@@ -42,7 +69,6 @@ def _valid_freqs(freqs, p):
 def grade(model, claim, p, heldout, verbose=False):
     K = list(claim["components"]["elements"])
     tokens, targets = make_batch(heldout, p)
-    chance = 1.0 / p
     checks, details = {}, {}
 
     # Step 2 of the judge: reject malformed / illegal specifications instead of crashing.
@@ -54,28 +80,9 @@ def grade(model, claim, p, heldout, verbose=False):
         return 0.0, {"checks": {}, "details": {}, "gate": False, "error": "illegal_freq"}
 
     for pred in claim["predictions"]:
-        pid = pred["id"]
-        if pid == "necessity":
-            actual = ablate(model, tokens, targets, K, p, mode="remove")
-            checks[pid] = (actual <= chance + 0.03) and abs(actual - pred["predicted"]) <= pred["tol"]
-        elif pid == "sufficiency":
-            actual = ablate(model, tokens, targets, K, p, mode="keep")
-            checks[pid] = (actual >= 0.9) and abs(actual - pred["predicted"]) <= pred["tol"]
-        elif pid == "specificity":
-            actual = specificity_curve(model, tokens, targets, pred["probe"], p)
-            err = sum(abs(x - y) for x, y in zip(actual, pred["predicted"])) / len(actual)
-            checks[pid] = err <= pred["tol"]
-        elif pid == "algorithm":
-            actual = algorithm_corr(model, tokens, p, K)
-            checks[pid] = (actual >= 0.9) and abs(actual - pred["predicted"]) <= pred["tol"]
-        elif pid == "phase_shift":
-            logits, predicted = phase_shift(model, tokens, p, pred["freq"], pred.get("shift", 1))
-            actual = (logits.argmax(-1) == predicted).float().mean().item()
-            checks[pid] = (actual >= 0.8) and abs(actual - pred["predicted"]) <= pred["tol"]
-        else:
-            checks[pid] = False
-            actual = None
-        details[pid] = actual
+        actual, passed = check_prediction(model, p, K, pred, tokens, targets)
+        checks[pred["id"]] = passed
+        details[pred["id"]] = actual
 
     gate = checks.get("necessity", False) and checks.get("sufficiency", False)
     mean_pass = sum(checks.values()) / max(len(checks), 1)

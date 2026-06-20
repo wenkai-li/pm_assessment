@@ -1,14 +1,21 @@
-# The Discovery — an RL environment for mechanistic-interpretability research
+# The Discovery Benchmark — an RL environment for research discovery
 
-A proof of concept of an RL environment that asks an agent to reverse-engineer the internal
-mechanism of a trained model and prove it understood the mechanism by predicting the effect of
-causal interventions on held-out inputs. The grader is purely behavioral, with no language-model
-judging.
+A benchmark, in the same sense as SWE-Bench: one uniform verifier run over many diverse instances.
+Every instance presents a system with a hidden, randomly placed structure, and the agent must
+investigate it and prove understanding by submitting a prediction contract, a set of causal
+interventions plus quantitative predictions that the grader runs on held-out conditions. The grader
+is purely behavioral, with no language-model judging.
 
-This repository implements one mechanism template: a transformer trained on `(a + b) mod p`, whose
-ground-truth algorithm (the Fourier "clock") is known, so verification is exact. The key frequencies
-are randomized per training seed, so the answer has to be rediscovered for every model rather than
-memorized.
+The benchmark spans five domains of machine learning research: model internals, training dynamics,
+data forensics, inference systems, and learned-policy behavior. They share one verifier through a
+small `Domain` interface (`domains/base.py`), so adding a domain is adding a backend, not a new
+grader.
+
+This repository implements the model-internals domain as the worked instance: a transformer trained
+on `(a + b) mod p`, whose ground-truth algorithm (the Fourier "clock") is known, so verification is
+exact. The key frequencies are randomized per training seed, so the answer has to be rediscovered for
+every model rather than memorized. The other four domains are specified as stubs that share the
+interface (`domains/`).
 
 ## Why it is interesting
 
@@ -41,6 +48,9 @@ python3 agent_runner.py --ckpt checkpoints/seed_0.pt # run an LLM solver (needs 
 
 ## Layout
 
-The environment lives in `discovery-env/`. `model.py` and `train_modular_addition.py` build the model
-zoo; `interventions.py` is the action space; `grader.py` scores a causal-claim contract;
-`reference_solver.py` is the environment's own ground truth; `agent_runner.py` runs an LLM solver.
+The environment lives in `discovery-env/`. `domains/base.py` is the `Domain` interface and
+`contract.py` is the domain-agnostic grader; `benchmark.py` runs it over any registered domain
+(`python3 benchmark.py --list`). For the model-internals domain, `model.py` and
+`train_modular_addition.py` build the model zoo, `interventions.py` is the action space, `grader.py`
+and `reference_solver.py` implement the verifier and the ground truth, and `agent_runner.py` runs an
+LLM solver. The other four domains are stubs under `domains/`.
