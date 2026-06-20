@@ -20,11 +20,12 @@ features at a few key frequencies, multiplied inside the network, and read out t
 trigonometric identity). The key frequencies depend on the training seed, so the answer cannot be
 memorized and must be rediscovered for each model.
 
-The experiment has two goals:
+The central question is, for every failure, whether the model genuinely cannot reason the answer out or
+whether it committed too early and did not explore deep enough. The experiment has three goals:
 1. Verify the grader has no false positives and no false negatives, using a calibration table.
-2. Run a real LLM as the solver agent and measure how it does. The motivation is to see whether the
-   LLM shows the two failure modes that motivated this environment: it does not commit to a definite
-   tested conclusion, and it underuses activation patching, staying on shallow signals.
+2. Run the exploration diagnostic, which separates a capability ceiling from premature commitment on
+   tasks with a known, depth-gated solution depth.
+3. Run a real LLM as the solver agent and measure where its failures fall on that line.
 
 ## 1. What is in the repository
 
@@ -82,6 +83,22 @@ print('untrained score', round(s,3), 'gate', info['gate'])   # expect a low scor
 "
 ```
 An untrained model should score low. A malformed claim (frequencies above p/2) should score 0.
+
+## 3b. Phase — the exploration diagnostic (no GPU, the central measurement)
+
+This runs in seconds and needs no GPU or training, and it demonstrates the measurement at the center
+of the design.
+
+```bash
+python3 diagnose.py --instances 300 --depth 10 --branching 4 --k 8
+```
+
+Expected: the `thorough` policy solves single-shot; the `premature` policy fails single-shot but
+passes pass@k and forced continuation while committing at about half the required depth, and is
+labelled premature commitment; the `capability_limited` policy fails every condition and is labelled a
+capability ceiling. This validates that the protocol separates the two failure modes against a known
+required depth. The same protocol wraps the LLM solver in Phase 3 and the real domains. `latent_chain.py`
+is the depth-controlled task, `protocol.py` the conditions, `solvers.py` the scripted policies.
 
 ## 4. Phase 1 — build the environment (train the model zoo)
 
