@@ -1,0 +1,19 @@
+# --- Assessment submission documents: DO NOT publish ---
+ASSESSMENT_DRAFT_v1.md
+ASSESSMENT_REQUIREMENTS.md
+DESIGN_SCAFFOLD.md
+INSTANCE_modular_addition.md
+SUBMISSION_SCAFFOLD.md
+
+# --- Editor / tooling state ---
+.aris/
+.claude/
+.DS_Store
+
+# --- Runtime artifacts ---
+discovery-env/checkpoints/
+**/*.pt
+**/*.log
+**/__pycache__/
+**/run_trace*.json
+**/trace_*.json

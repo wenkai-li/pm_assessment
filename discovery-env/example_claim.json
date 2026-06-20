@@ -1,0 +1,12 @@
+{
+  "mechanism_summary": "The model embeds each input as trigonometric features at a few key frequencies, multiplies them through attention and the MLP, and reads the answer out via cos(w_k (a + b - c)). The key frequencies below were found by taking the DFT of the embedding matrix along the token axis and keeping the frequencies with large norm. (Illustrative values; the true set is per-model and is produced by reference_solver.)",
+  "components": { "basis": "fourier", "elements": [5, 17, 34, 41, 52] },
+  "predictions": [
+    { "id": "necessity",   "predicted": 0.009, "tol": 0.03 },
+    { "id": "sufficiency", "predicted": 0.98,  "tol": 0.03 },
+    { "id": "specificity", "probe": [5, 17, 34, 41, 52, 3, 7, 22, 48, 55],
+      "predicted": [0.70, 0.71, 0.69, 0.72, 0.70, 0.99, 0.99, 0.99, 0.99, 0.99], "tol": 0.06 },
+    { "id": "algorithm",   "predicted": 0.96,  "tol": 0.05 },
+    { "id": "phase_shift", "freq": 5, "shift": 1, "predicted": 0.92, "tol": 0.10 }
+  ]
+}
