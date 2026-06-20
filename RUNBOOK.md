@@ -100,6 +100,20 @@ capability ceiling. This validates that the protocol separates the two failure m
 required depth. The same protocol wraps the LLM solver in Phase 3 and the real domains. `latent_chain.py`
 is the depth-controlled task, `protocol.py` the conditions, `solvers.py` the scripted policies.
 
+## 3c. Phase — second domain calibration (no GPU)
+
+To show the ladder and judge are not specific to interpretability, the data-forensics domain is
+implemented in pure numpy and graded by the same machinery.
+
+```bash
+python3 benchmark.py --domain data_forensics
+python3 test_data_forensics.py
+```
+
+Expected: the reference contract solves and scores 1.0; an empty, whole-feature-set, or wrong-feature
+contract scores about 0.1; a shallow detect-and-stop contract scores about 0.2, below the success
+band. Same depth-calibrated judge, a different research task.
+
 ## 4. Phase 1 — build the environment (train the model zoo)
 
 ```bash

@@ -23,8 +23,10 @@ exact. The key frequencies are randomized per training seed, so the answer has t
 every model rather than memorized. Its prediction contract is a dependency-ordered derivation ladder
 (necessity, sufficiency, specificity, algorithm, phase shift), so the same depth-calibrated judge that
 scores the synthetic task scores this real one: naming the components without deriving how they compute
-the answer is a shallow commit and scores below the success band. The other four domains are specified
-as stubs that share the interface (`domains/`).
+the answer is a shallow commit and scores below the success band. A second domain, data forensics, is
+also implemented (pure numpy, no GPU): a classifier trained with a hidden spurious correlation, graded
+by the same ladder and judge. The three remaining domains are specified stubs that share the interface
+(`domains/`).
 
 ## Why it is interesting
 
@@ -65,6 +67,7 @@ real open-weights LLM (for example Llama) as the solver agent and measuring its 
 cd discovery-env
 pip install -r requirements.txt
 python3 diagnose.py --instances 300 --depth 10           # exploration diagnostic (no GPU)
+python3 benchmark.py --domain data_forensics             # second domain calibration (no GPU)
 python3 train_modular_addition.py --seeds 0 1 2          # build the model zoo (grokking)
 python3 calibration.py --ckpt checkpoints/seed_0.pt      # print the calibration table
 python3 agent_runner.py --ckpt checkpoints/seed_0.pt     # run an LLM solver (needs a served model)

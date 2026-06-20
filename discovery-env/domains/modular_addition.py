@@ -1,22 +1,12 @@
 """The model-internals domain (the worked instance), adapting the modular-addition Fourier-circuit
 code to the shared Domain interface."""
 import calibration as calib
+from contract import grade_ladder
 from domains.base import Domain
 from grader import _heldout, check_prediction
 from interventions import make_batch
 from io_utils import load_model
 from reference_solver import build_reference_contract
-
-
-def prefix_len(flags):
-    """Length of the longest leading run of truthy flags (the depth-gated prefix)."""
-    n = 0
-    for f in flags:
-        if f:
-            n += 1
-        else:
-            break
-    return n
 
 
 class ModularAdditionDomain(Domain):
@@ -37,24 +27,8 @@ class ModularAdditionDomain(Domain):
         return len(self.DERIVATION_LADDER)
 
     def grade_episode(self, instance, contract, heldout, probes=0):
-        """Grade a committed contract along the derivation ladder and return a result dict for the
-        depth-calibrated judge (judge.score_episode). commit_depth is how deep the agent claimed
-        (leading rungs it supplied); correct_depth is how deep its claims actually hold on held-out
-        inputs; solved means the full mechanism is verified."""
-        preds = {p["id"]: p for p in contract["predictions"]}
-        ladder = self.DERIVATION_LADDER
-
-        commit_depth = prefix_len(rung in preds for rung in ladder)
-
-        pass_flags = []
-        for rung in ladder[:commit_depth]:
-            _, passed = self.execute(preds[rung], instance, contract["components"], heldout)
-            pass_flags.append(passed)
-        correct_depth = prefix_len(pass_flags)
-        required = len(ladder)
-
-        return {"solved": correct_depth == required, "correct_depth": correct_depth,
-                "commit_depth": commit_depth, "required": required, "probes": probes}
+        """Grade a committed contract along the derivation ladder (shared grade_ladder)."""
+        return grade_ladder(self, instance, contract, heldout, probes)
 
     def build_instance(self, seed):
         # The POC trains checkpoints offline (train_modular_addition.py); here we load one.
