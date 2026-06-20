@@ -74,6 +74,9 @@ The environment lives in `discovery-env/`. `domains/base.py` is the `Domain` int
 (`python3 benchmark.py --list`). For the model-internals domain, `model.py` and
 `train_modular_addition.py` build the model zoo, `interventions.py` is the action space, `grader.py`
 and `reference_solver.py` implement the verifier and the ground truth, and `agent_runner.py` runs an
-LLM solver. The other four domains are stubs under `domains/`. The exploration diagnostic lives in
-`latent_chain.py` (the depth-controlled task), `protocol.py` (the conditions), `solvers.py` (scripted
-policies of known behavior), and `diagnose.py` (the table).
+LLM solver. The other four domains are stubs under `domains/`. The per-episode reward is the
+depth-calibrated judge in `judge.py` (success override, a success band so partial progress cannot
+masquerade as success, and a probe budget that blocks brute-forcing the depth gate). The exploration
+diagnostic lives in `latent_chain.py` (the depth-controlled task), `protocol.py` (the conditions),
+`solvers.py` (scripted policies of known behavior), and `diagnose.py` (the table, which reports the
+judge reward alongside the protocol signals).

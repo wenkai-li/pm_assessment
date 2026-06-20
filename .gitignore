@@ -18,3 +18,5 @@ discovery-env/checkpoints/
 **/__pycache__/
 **/run_trace*.json
 **/trace_*.json
+_codex_judge_brief.md
+_codex_judge_out.md

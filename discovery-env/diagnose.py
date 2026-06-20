@@ -9,6 +9,7 @@ capability ceiling. A policy that fails every condition is diagnosed as a capabi
 """
 import argparse
 
+from judge import score_episode
 from latent_chain import LatentChainTask
 from protocol import (forced_continuation_solves, pass_at_k, run_episode,
                       solves_with_partial_hint)
@@ -30,9 +31,11 @@ def verdict(realized, passk, forced, hint, commit_frac):
 
 def evaluate(PolicyCls, task, instances, k):
     realized = passk = forced = hint = 0
+    reward = 0.0
     commit_fracs = []
     for inst in instances:
         r = run_episode(PolicyCls(), task, inst, attempt_seed=0)
+        reward += score_episode(r).score
         realized += r["solved"]
         if not r["solved"]:
             commit_fracs.append(r["commit_depth"] / r["required"])
@@ -41,8 +44,8 @@ def evaluate(PolicyCls, task, instances, k):
         hint += solves_with_partial_hint(PolicyCls(), task, inst)
     n = len(instances)
     cf = sum(commit_fracs) / len(commit_fracs) if commit_fracs else 1.0
-    return {"pass@1": realized / n, "pass@k": passk / n, "forced": forced / n,
-            "hint<d*": hint / n, "commit/req(fail)": cf}
+    return {"reward": reward / n, "pass@1": realized / n, "pass@k": passk / n,
+            "forced": forced / n, "hint<d*": hint / n, "commit/req(fail)": cf}
 
 
 def main():
@@ -56,7 +59,7 @@ def main():
     task = LatentChainTask(depth=args.depth, branching=args.branching)
     instances = [task.build(seed) for seed in range(args.instances)]
 
-    cols = ["pass@1", "pass@k", "forced", "hint<d*", "commit/req(fail)"]
+    cols = ["reward", "pass@1", "pass@k", "forced", "hint<d*", "commit/req(fail)"]
     print(f"depth d* = {args.depth}, branching = {args.branching}, "
           f"instances = {args.instances}, k = {args.k}\n")
     header = f"{'policy':<20}" + "".join(f"{c:<18}" for c in cols) + "verdict"

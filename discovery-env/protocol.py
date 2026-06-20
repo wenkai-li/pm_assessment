@@ -35,10 +35,12 @@ def run_episode(policy, task, inst, hint=0, force_full=False, attempt_seed=0, st
             if force_full and verified < D:
                 policy.observe_rejected()
                 continue
+            correct = task.correct_depth(inst, payload) if hasattr(task, "correct_depth") else (
+                D if task.verify(inst, payload) else verified)
             return {"solved": task.verify(inst, payload), "commit_depth": verified,
-                    "required": D, "probes": probes}
-    return {"solved": False, "commit_depth": verified, "required": D, "probes": probes,
-            "timeout": True}
+                    "correct_depth": correct, "required": D, "probes": probes}
+    return {"solved": False, "commit_depth": verified, "correct_depth": verified,
+            "required": D, "probes": probes, "timeout": True}
 
 
 def pass_at_k(policy, task, inst, k):

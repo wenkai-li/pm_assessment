@@ -34,3 +34,15 @@ class LatentChainTask:
     def verify(self, inst, answer):
         """The terminal verifier (no language-model judge): exact match to the hidden chain."""
         return list(answer) == inst["hidden"]
+
+    def correct_depth(self, inst, answer):
+        """Length of the longest correct leading prefix of `answer` (the depth to which the
+        committed answer is actually right). Used by the depth-calibrated judge."""
+        h = inst["hidden"]
+        d = 0
+        for i, key in enumerate(answer):
+            if i < len(h) and key == h[i]:
+                d += 1
+            else:
+                break
+        return d
