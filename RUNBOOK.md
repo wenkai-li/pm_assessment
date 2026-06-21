@@ -199,6 +199,22 @@ Aggregate `final_score`, submission rate, and the patch-call ratio across runs.
 Try stronger models the same way (for example Llama-3.1-70B-Instruct, or any OpenAI-compatible
 endpoint) to see how the failure modes change with capability.
 
+## 6b. Phase — baseline with external coding agents (Claude Code, Codex)
+
+`baseline/run_baseline.py` runs an external agent as the solver on the internals environment and grades
+its committed claim with the depth-calibrated judge. It builds an isolated workspace holding the model
+and the safe investigation tools but not the grader, the reference, or the judge, so the agent cannot
+read the answer.
+
+```bash
+python3 baseline/run_baseline.py --ckpt checkpoints/seed_0.pt --agent codex
+python3 baseline/run_baseline.py --ckpt checkpoints/seed_0.pt --agent claude
+```
+
+It prints the score, whether the agent solved, and the derivation depth it reached before committing.
+This is the evidence for "challenging" and for the premature-commitment thesis: a low score with a
+shallow commit depth is the failure mode the benchmark is built to expose.
+
 ## 7. Phase 4 — what the result means
 
 A low pass rate with frequent non-submission and few patch calls is direct evidence for the two

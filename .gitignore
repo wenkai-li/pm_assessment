@@ -20,3 +20,6 @@ discovery-env/checkpoints/
 **/trace_*.json
 _codex_judge_brief.md
 _codex_judge_out.md
+_codex_*
+discovery-env/baseline/mi_baseline_*
+train_baseline.log
