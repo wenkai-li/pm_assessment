@@ -15,24 +15,50 @@ from interventions import ablate, make_batch, phase_shift, model_logits
 
 
 def algorithm_corr(model, tokens, p, K):
-    """Pearson correlation between the model logits and the Fourier-clock formula on these inputs."""
+    """How well the claimed key frequencies reconstruct the model logits.
+
+    A real grokked model reads the answer out as a weighted sum of cos(2*pi*k*(a+b-c)/p) over its key
+    frequencies, but the weights are not equal, so an equal-weight formula correlates poorly. This
+    fits the best non-negative-free amplitudes for the claimed frequencies by least squares and returns
+    the correlation of that best-fit reconstruction with the actual logits. The true frequency set
+    reconstructs the logits well; a wrong or incomplete set does not, so the test stays discriminating
+    while no longer penalizing the true mechanism for the idealized equal-weight assumption."""
     a, b = tokens[:, 0], tokens[:, 1]
     s = (a + b).float()
     c = torch.arange(p).float()
     ang = 2 * math.pi * (s[:, None] - c[None, :]) / p  # (n, p)
-    pred = torch.zeros(len(tokens), p)
+    cols = [torch.ones(len(tokens), p).flatten()]  # constant term
     for k in K:
-        pred = pred + torch.cos(k * ang)
-    actual = model_logits(model, tokens)[:, :p]  # drop the '=' token logit; answers are 0..p-1
-    x, y = pred.flatten(), actual.flatten()
-    x = x - x.mean()
-    y = y - y.mean()
+        cols.append(torch.cos(k * ang).flatten())
+        cols.append(torch.sin(k * ang).flatten())
+    if len(cols) == 1:
+        return 0.0
+    design = torch.stack(cols, dim=1)  # (n*p, 1 + 2|K|)
+    actual = model_logits(model, tokens)[:, :p].flatten()  # answers are 0..p-1
+    coef, *_ = torch.linalg.lstsq(design, actual.unsqueeze(1))
+    recon = (design @ coef).squeeze(1)
+    x = recon - recon.mean()
+    y = actual - actual.mean()
     return (x @ y / (x.norm() * y.norm() + 1e-9)).item()
 
 
 def specificity_curve(model, tokens, targets, probe, p):
     """Accuracy after removing each single probe frequency on its own."""
     return [ablate(model, tokens, targets, [k], p, mode="remove") for k in probe]
+
+
+def _freq_is_real(model, p, k, rel_threshold=0.15):
+    """True if frequency k carries real energy in the number-token embedding, relative to the
+    strongest frequency. Used for the minimality check, which rejects claiming inert frequencies."""
+    import math as _m
+    from fourier import make_fourier_basis
+    F = make_fourier_basis(p)
+    coeffs = F @ model.W_E.data[:p]
+    norms = []
+    for j in range(1, p // 2 + 1):
+        norms.append((coeffs[2 * j - 1].norm() ** 2 + coeffs[2 * j].norm() ** 2).sqrt().item())
+    target = (coeffs[2 * k - 1].norm() ** 2 + coeffs[2 * k].norm() ** 2).sqrt().item()
+    return target >= rel_threshold * max(norms)
 
 
 def check_prediction(model, p, K, pred, tokens, targets):
@@ -47,14 +73,24 @@ def check_prediction(model, p, K, pred, tokens, targets):
         actual = ablate(model, tokens, targets, K, p, mode="keep")
         passed = (actual >= 0.9) and abs(actual - pred["predicted"]) <= pred["tol"]
     elif pid == "specificity":
+        # Match the predicted per-frequency curve, AND enforce minimality: every claimed frequency must
+        # be one the model actually represents, that is, carry real energy in the embedding. Inert
+        # frequencies carry almost none, so this rejects claiming the whole frequency set while still
+        # accepting a redundant true set whose individual frequencies do not each move accuracy alone.
         actual = specificity_curve(model, tokens, targets, pred["probe"], p)
         err = sum(abs(x - y) for x, y in zip(actual, pred["predicted"])) / len(actual)
-        passed = err <= pred["tol"]
+        minimal = all(_freq_is_real(model, p, k) for k in K)
+        passed = (err <= pred["tol"]) and minimal
     elif pid == "algorithm":
+        # A real grokked model's logits are reconstructed by its key frequencies to about 0.8, not 1.0,
+        # because higher-order terms carry the rest; the floor reflects that while staying well above
+        # what a wrong or incomplete frequency set reconstructs.
         actual = algorithm_corr(model, tokens, p, K)
-        passed = (actual >= 0.9) and abs(actual - pred["predicted"]) <= pred["tol"]
+        passed = (actual >= 0.75) and abs(actual - pred["predicted"]) <= pred["tol"]
     elif pid == "phase_shift":
-        logits, predicted = phase_shift(model, tokens, p, pred["freq"], pred.get("shift", 1))
+        # Rotate all claimed key frequencies coherently so the answer moves by `shift`; rotating one
+        # frequency among several does not move the argmax on a real model.
+        logits, predicted = phase_shift(model, tokens, p, K, pred.get("shift", 1))
         actual = (logits.argmax(-1) == predicted).float().mean().item()
         passed = (actual >= 0.8) and abs(actual - pred["predicted"]) <= pred["tol"]
     else:

@@ -30,7 +30,7 @@ def build_reference_contract(model, p, heldout):
     spec = specificity_curve(model, tokens, targets, probe, p)
     corr = algorithm_corr(model, tokens, p, K)
     k0 = K[0]
-    _, _, rate = _phase_rate(model, tokens, p, k0)
+    _, _, rate = _phase_rate(model, tokens, p, K)  # rotate all key frequencies coherently
 
     return {
         "components": {"basis": "fourier", "elements": K},

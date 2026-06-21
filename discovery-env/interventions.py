@@ -49,9 +49,15 @@ def ablate(model, tokens, targets, freqs, p, mode="remove"):
 
 @torch.no_grad()
 def phase_shift(model, tokens, p, freq, shift=1):
-    """Phase-shift position 0 by `shift` input-units at `freq`; return predicted answers and logits."""
-    delta = 2 * math.pi * freq * shift / p
-    W_shift = phase_shift_embedding(model.W_E.data, p, freq, delta)
+    """Phase-shift position 0 by `shift` input-units at one or more frequencies, and return the
+    predicted (shifted) answers and the model logits. `freq` may be a single frequency or a list. A
+    real grokked model spreads the computation over several key frequencies, so moving the answer by a
+    clean amount requires rotating all of them coherently; rotating a single frequency among many does
+    not move the argmax."""
+    freqs = [freq] if isinstance(freq, int) else list(freq)
+    W_shift = model.W_E.data
+    for k in freqs:
+        W_shift = phase_shift_embedding(W_shift, p, k, 2 * math.pi * k * shift / p)
     logits = run(model, tokens, pos0_W_E=W_shift)
     a, b = tokens[:, 0], tokens[:, 1]
     predicted = (a + b + shift) % p
