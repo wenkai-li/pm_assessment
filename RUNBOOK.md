@@ -215,6 +215,10 @@ It prints the score, whether the agent solved, and the derivation depth it reach
 This is the evidence for "challenging" and for the premature-commitment thesis: a low score with a
 shallow commit depth is the failure mode the benchmark is built to expose.
 
+Result on a grokked seed-0 instance (single attempt): Codex (GPT-5.5) and Claude Code both scored
+0.294, neither solved, both committed at depth three of five, passing the component-identification
+rungs and failing the mechanism-derivation and intervention rungs. Archived in baseline/results/.
+
 ## 7. Phase 4 — what the result means
 
 A low pass rate with frequent non-submission and few patch calls is direct evidence for the two

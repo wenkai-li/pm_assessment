@@ -1,0 +1,10 @@
+{
+  "components": {"basis": "fourier", "elements": [1, 15, 18, 22, 28]},
+  "predictions": [
+    {"id": "necessity",   "predicted": 0.02, "tol": 0.05},
+    {"id": "sufficiency", "predicted": 0.99, "tol": 0.05},
+    {"id": "specificity", "probe": [1, 15, 18, 22, 28], "predicted": [0.74, 0.29, 0.20, 1.0, 1.0], "tol": 0.06},
+    {"id": "algorithm",   "predicted": 0.57, "tol": 0.05},
+    {"id": "phase_shift", "freq": 1, "shift": 1, "predicted": 0.0, "tol": 0.1}
+  ]
+}

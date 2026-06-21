@@ -1,0 +1,36 @@
+{
+  "components": {
+    "basis": "fourier",
+    "elements": [1, 15, 18]
+  },
+  "predictions": [
+    {
+      "id": "necessity",
+      "predicted": 0.0216,
+      "tol": 0.05
+    },
+    {
+      "id": "sufficiency",
+      "predicted": 0.9475,
+      "tol": 0.05
+    },
+    {
+      "id": "specificity",
+      "probe": [18, 15, 1],
+      "predicted": [0.1939, 0.2834, 0.7414],
+      "tol": 0.06
+    },
+    {
+      "id": "algorithm",
+      "predicted": 0.72,
+      "tol": 0.05
+    },
+    {
+      "id": "phase_shift",
+      "freq": 18,
+      "shift": 1,
+      "predicted": 0.2898,
+      "tol": 0.1
+    }
+  ]
+}

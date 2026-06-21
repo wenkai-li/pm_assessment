@@ -1,0 +1,13 @@
+Baseline: external coding agents as solvers on the modular-addition internals environment.
+Grokked model seed 0, true key frequencies = [1, 2, 15, 18, 22, 28] (d* = 5 derivation ladder).
+Single attempt, single seed, illustrative.
+
+agent          score   solved   commit_depth   frequencies found
+codex (gpt-5.5) 0.294   no       3 / 5          [1, 15, 18]            (3 of 6)
+claude code     0.294   no       3 / 5          [1, 15, 18, 22, 28]    (5 of 6)
+
+Both reach depth 3 (necessity, sufficiency, specificity: identifying WHICH components) and stop,
+failing the algorithm and phase-shift rungs (deriving HOW it computes, predicting a novel
+intervention). Claude predicted phase_shift = 0.0, i.e. that its own intervention would do nothing.
+Neither solves; both commit a shallow account below the 0.5 success band. The depth at which they
+stop is exactly the shallow-to-deep boundary the benchmark is built to localize.

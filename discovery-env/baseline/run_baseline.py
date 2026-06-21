@@ -114,9 +114,10 @@ def run_agent(agent, ws):
     with open(prompt_path) as f:
         prompt = f.read()
     if agent == "codex":
-        cmd = ["codex", "exec", "--skip-git-repo-check", "-C", ws, prompt]
+        cmd = ["codex", "exec", "--skip-git-repo-check", "--sandbox", "workspace-write",
+               "-C", ws, prompt]
     elif agent == "claude":
-        cmd = ["claude", "-p", prompt, "--permission-mode", "bypassPermissions"]
+        cmd = ["claude", "-p", prompt, "--dangerously-skip-permissions"]
     else:
         raise SystemExit(f"unknown agent {agent}")
     print(f"running {agent} in {ws} ...", flush=True)
